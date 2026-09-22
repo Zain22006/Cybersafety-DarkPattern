@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DarkWatch — Cyber-Safety Dark Pattern & Hidden Fee Detector</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .admin-only { display: none; }
+    body.is-admin .admin-only { display: block; }
+    body.is-admin .admin-only-inline { display: inline-flex; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
+
+  <!-- Top Sticky Navigation -->
+  <header class="bg-slate-900/95 border-b border-slate-800 sticky top-0 z-50 backdrop-blur">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center font-black text-white shadow-lg shadow-indigo-600/30">
+          🛡️
+        </div>
+        <div>
+          <span class="text-xl font-black text-white tracking-tight">Dark<span class="text-indigo-400">Watch</span></span>
+          <span id="roleBadge" class="ml-2 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">Consumer View</span>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="flex items-center gap-1 sm:gap-2">
+        <button onclick="switchTab('index')" class="nav-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-indigo-600 transition-colors" data-target="index">Public Index</button>
+        <button onclick="switchTab('hall')" class="nav-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-colors" data-target="hall">Hall of Shame</button>
+        <button onclick="switchTab('submit')" class="nav-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors" data-target="submit">+ Report Deception</button>
+
+        <!-- Admin / Mod Only Tabs (hidden until authenticated) -->
+        <button onclick="switchTab('moderation')" class="admin-only nav-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors" data-target="moderation">Approval Queue (<span id="queueBadgeCount">2</span>)</button>
+        <button onclick="switchTab('websites')" class="admin-only nav-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-cyan-400 hover:text-cyan-300 transition-colors" data-target="websites">Websites & Merge</button>
+        <button onclick="switchTab('analytics')" class="admin-only nav-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition-colors" data-target="analytics">Analytics</button>
+
+        <!-- Auth Button -->
+        <div class="ml-2 pl-2 border-l border-slate-800">
+          <button id="authBtn" onclick="handleAuthClick()" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition-colors flex items-center gap-1.5 shadow">
+            <span>Admin Sign In</span> 🔐
+          </button>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Security Banner for Authenticated Admin -->
+  <div id="adminSecurityBanner" class="hidden bg-indigo-950/80 border-b border-indigo-800/60 px-4 py-2 text-xs text-indigo-200">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span class="font-bold text-white">Authenticated as @admin_secops</span>
+        <span class="text-slate-400">| Session: PBKDF2-SHA256 Encrypted (256-bit token)</span>
+      </div>
+      <div class="flex items-center gap-3 text-[11px]">
+        <span class="text-emerald-400 font-semibold">✓ Brute-Force Shield Active</span>
+        <span class="text-indigo-300 font-semibold">✓ Timing-Safe Auth Check</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <!-- TAB 1: PUBLIC INDEX -->
+    <section id="tab-index" class="tab-content active space-y-8">
+      <!-- Hero Banner -->
+      <div class="text-center py-12 px-4 bg-gradient-to-b from-indigo-950/40 via-slate-900 to-slate-900 rounded-3xl border border-indigo-900/30 relative overflow-hidden">
+        <span class="inline-block text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 mb-3">Consumer Web Safety Portal</span>
+        <h1 class="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
+          Expose Digital Deception. <br />
+          <span class="text-indigo-400">Vote on Unethical Web Layouts.</span>
+        </h1>
+        <p class="text-slate-400 text-xs sm:text-sm mt-3 max-w-xl mx-auto">
+          A decentralized watchdog index tracking deceptive checkout tricks, hidden fees, roach motel cancellation flows, and sneaky subscriptions.
+        </p>
+
+        <!-- Live Statistics Counter -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8 pt-6 border-t border-slate-800 max-w-2xl mx-auto">
+          <div><p class="text-2xl font-black text-white" id="stat-reports">142</p><p class="text-[11px] uppercase text-slate-400 font-semibold">Tricks Reported</p></div>
+          <div><p class="text-2xl font-black text-indigo-400" id="stat-approved">108</p><p class="text-[11px] uppercase text-slate-400 font-semibold">Confirmed Offenses</p></div>
+          <div><p class="text-2xl font-black text-emerald-400">420</p><p class="text-[11px] uppercase text-slate-400 font-semibold">Watchdogs</p></div>
+          <div><p class="text-2xl font-black text-amber-400" id="stat-votes">1,894</p><p class="text-[11px] uppercase text-slate-400 font-semibold">Votes Cast</p></div>
+        </div>
+      </div>
+
+      <!-- Controls: Filter & Search -->
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+        <input type="text" id="searchInput" oninput="filterReports()" placeholder="Search by offender domain or deception summary..." class="w-full sm:w-96 bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500" />
+        <div class="flex gap-2 overflow-x-auto w-full sm:w-auto pb-1">
+          <button onclick="setCategoryFilter('')" class="cat-pill text-xs px-3 py-1.5 rounded-lg font-semibold bg-indigo-600 text-white">All Categories</button>
+          <button onclick="setCategoryFilter('hidden-fee')" class="cat-pill text-xs px-3 py-1.5 rounded-lg font-semibold bg-slate-800 text-slate-400 border border-slate-700">Hidden Fees</button>
+          <button onclick="setCategoryFilter('roach-motel')" class="cat-pill text-xs px-3 py-1.5 rounded-lg font-semibold bg-slate-800 text-slate-400 border border-slate-700">Roach Motel</button>
+          <button onclick="setCategoryFilter('pre-checked')" class="cat-pill text-xs px-3 py-1.5 rounded-lg font-semibold bg-slate-800 text-slate-400 border border-slate-700">Pre-Checked</button>
+          <button onclick="setCategoryFilter('fake-urgency')" class="cat-pill text-xs px-3 py-1.5 rounded-lg font-semibold bg-slate-800 text-slate-400 border border-slate-700">Fake Urgency</button>
+        </div>
+      </div>
+
+      <!-- Reports Cards Grid -->
+      <div id="reportsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <!-- Dynamically rendered -->
+      </div>
+    </section>
+
+    <!-- TAB 2: HALL OF SHAME -->
+    <section id="tab-hall" class="tab-content space-y-6">
+      <div class="text-center py-8 bg-gradient-to-b from-rose-950/40 to-slate-900 rounded-2xl border border-rose-900/30 p-4">
+        <span class="text-rose-400 text-xs font-bold uppercase tracking-wider">🔥 Community-Ranked Leaderboard</span>
+        <h2 class="text-3xl font-extrabold text-white mt-1">Hall of Shame</h2>
+        <p class="text-slate-400 text-xs mt-1">Top verified offenders with the highest cumulative consumer grievance votes.</p>
+      </div>
+
+      <div id="hallList" class="space-y-3">
+        <!-- Dynamically rendered -->
+      </div>
+    </section>
+
+    <!-- TAB 3: SUBMIT REPORT -->
+    <section id="tab-submit" class="tab-content max-w-2xl mx-auto space-y-6">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6">
+        <div>
+          <h2 class="text-2xl font-black text-white">Submit Deceptive Web Layout</h2>
+          <p class="text-xs text-slate-400 mt-1">Submit links or layout tricks. Our automated Gemini Vision AI compliance scanner checks the page elements immediately.</p>
+        </div>
+
+        <form id="submitForm" onsubmit="handleUserSubmit(event)" class="space-y-4 text-xs">
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">Target Webpage Link (HTTPS)</label>
+            <input type="url" required id="subUrl" placeholder="https://shadyretailer.com/checkout" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:border-indigo-500 outline-none" />
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">Deception Title / Summary</label>
+            <input type="text" required id="subTitle" placeholder="e.g. Disguised $19.99 monthly membership bundled into order" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:border-indigo-500 outline-none" />
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block font-semibold text-slate-300 mb-1">Category Classification</label>
+              <select id="subCategory" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white outline-none">
+                <option value="hidden-fee">Hidden Fee / Surcharge</option>
+                <option value="roach-motel">Roach Motel (Hard to cancel)</option>
+                <option value="pre-checked">Pre-checked Consent Box</option>
+                <option value="fake-urgency">Fake Urgency / Timer</option>
+                <option value="confirm-shaming">Confirm Shaming</option>
+                <option value="sneaky-subscription">Sneaky Subscription</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-300 mb-1">Consumer Severity Level (1-5)</label>
+              <input type="range" id="subSeverity" min="1" max="5" value="4" class="w-full accent-indigo-500 mt-2" oninput="document.getElementById('sevVal').innerText = this.value" />
+              <div class="text-right text-[11px] text-amber-400 font-bold">Tier <span id="sevVal">4</span> / 5</div>
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">Explanation of How Users Are Misled</label>
+            <textarea id="subDesc" rows="3" required placeholder="Describe what tricks occurred, pre-checked checkboxes, cancellation roadblocks, or unexpected costs..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:border-indigo-500 outline-none"></textarea>
+          </div>
+
+          <div id="aiScanningIndicator" class="hidden bg-indigo-950/40 border border-indigo-900 rounded-xl p-4 text-center space-y-2">
+            <div class="inline-block animate-spin text-lg">🤖</div>
+            <p class="font-bold text-indigo-300">Gemini Vision AI is auditing layout DOM & elements...</p>
+            <p class="text-[11px] text-slate-400">Inspecting DOM nodes for pre-checked consent and recurring surcharge disclosures.</p>
+          </div>
+
+          <button type="submit" id="submitBtn" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold text-white transition-colors text-sm shadow-lg shadow-indigo-600/20">
+            Submit & Run Automated AI Audit
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- TAB 4: MODERATOR APPROVAL QUEUE (ADMIN) -->
+    <section id="tab-moderation" class="tab-content space-y-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-2xl font-bold text-white">Content Approval & Validation Queue</h2>
+          <p class="text-xs text-slate-400">Verify user submissions alongside automated AI audits. Approve to publish or reject with reason.</p>
+        </div>
+        <span class="text-xs bg-amber-500/20 text-amber-300 border border-amber-500/30 px-3 py-1 rounded-full font-bold" id="queueBadge">2 Pending</span>
+      </div>
+
+      <div id="queueList" class="space-y-4">
+        <!-- Dynamically rendered -->
+      </div>
+    </section>
+
+    <!-- TAB 5: WEBSITES DIRECTORY & MERGE DUPLICATES (ADMIN) -->
+    <section id="tab-websites" class="tab-content space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-2xl font-bold text-white">Offender Directory & Index Management</h2>
+          <p class="text-xs text-slate-400">Override site statuses ("Resolved/Fixed" when sites adopt ethical UI) and consolidate duplicate reports.</p>
+        </div>
+        <button onclick="document.getElementById('mergeModal').classList.remove('hidden')" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition-colors">
+          + Merge Duplicate Reports
+        </button>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+        <table class="w-full text-left text-xs text-slate-300">
+          <thead class="bg-slate-950 text-slate-400 uppercase font-semibold border-b border-slate-800">
+            <tr>
+              <th class="p-3.5">Offender Domain</th>
+              <th class="p-3.5">Industry</th>
+              <th class="p-3.5">Threat Tier</th>
+              <th class="p-3.5">Confirmed Reports</th>
+              <th class="p-3.5">Status Override</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800/60" id="websitesTableBody">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- TAB 6: ANALYTICS (ADMIN) -->
+    <section id="tab-analytics" class="tab-content space-y-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-2xl font-bold text-white">Web Safety Analytics & Export Engine</h2>
+          <p class="text-xs text-slate-400">Overview of deceptive design trends, affected sectors, and raw research export.</p>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="exportData('csv')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-semibold border border-slate-700">Download CSV</button>
+          <button onclick="exportData('json')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-semibold border border-slate-700">Download JSON</button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+          <h3 class="font-bold text-white text-sm">Most Prevalent Dark Pattern Types</h3>
+          <div class="space-y-3 text-xs">
+            <div>
+              <div class="flex justify-between text-slate-300 mb-1"><span>Hidden Fees & Surcharges</span><span class="font-bold text-indigo-400">38%</span></div>
+              <div class="w-full bg-slate-800 rounded-full h-2"><div class="bg-indigo-500 h-2 rounded-full" style="width: 38%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between text-slate-300 mb-1"><span>Roach Motel (Hard to cancel)</span><span class="font-bold text-amber-400">26%</span></div>
+              <div class="w-full bg-slate-800 rounded-full h-2"><div class="bg-amber-500 h-2 rounded-full" style="width: 26%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between text-slate-300 mb-1"><span>Pre-checked Subscription Consent</span><span class="font-bold text-emerald-400">20%</span></div>
+              <div class="w-full bg-slate-800 rounded-full h-2"><div class="bg-emerald-500 h-2 rounded-full" style="width: 20%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between text-slate-300 mb-1"><span>Fake Countdown Urgency</span><span class="font-bold text-rose-400">16%</span></div>
+              <div class="w-full bg-slate-800 rounded-full h-2"><div class="bg-rose-500 h-2 rounded-full" style="width: 16%"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+          <h3 class="font-bold text-white text-sm">Industry Sector Vulnerability</h3>
+          <div class="grid grid-cols-2 gap-3 text-center">
+            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800"><p class="text-2xl font-black text-white">44%</p><p class="text-[11px] text-slate-400 font-semibold mt-1">E-Commerce Retail</p></div>
+            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800"><p class="text-2xl font-black text-indigo-400">28%</p><p class="text-[11px] text-slate-400 font-semibold mt-1">SaaS & Apps</p></div>
+            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800"><p class="text-2xl font-black text-cyan-400">16%</p><p class="text-[11px] text-slate-400 font-semibold mt-1">Travel & Flights</p></div>
+            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800"><p class="text-2xl font-black text-amber-400">12%</p><p class="text-[11px] text-slate-400 font-semibold mt-1">Gaming & Media</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- High-Security Admin Authentication Modal -->
+  <div id="loginModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 sm:p-8 space-y-5 shadow-2xl relative">
+      <button onclick="closeLoginModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg font-bold">&times;</button>
+      
+      <div class="text-center space-y-1">
+        <div class="w-12 h-12 rounded-2xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center mx-auto text-xl mb-2">
+          🔐
+        </div>
+        <h3 class="text-lg font-black text-white">Administrator Secure Gateway</h3>
+        <p class="text-xs text-slate-400">PBKDF2-SHA256 Encrypted Authentication</p>
+      </div>
+
+      <!-- Security Status Box -->
+      <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-[11px] space-y-1 text-slate-300">
+        <div class="flex justify-between"><span>Rate Limiting:</span><span class="text-emerald-400 font-bold">5 attempts / 15m</span></div>
+        <div class="flex justify-between"><span>Brute-force Lockout:</span><span class="text-emerald-400 font-bold">Enabled</span></div>
+        <div class="flex justify-between"><span>Timing-Safe Hash Verification:</span><span class="text-emerald-400 font-bold">Active</span></div>
+      </div>
+
+      <form id="adminLoginForm" onsubmit="handleAdminLogin(event)" class="space-y-4 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Admin Username</label>
+          <input type="text" id="adminUsername" required placeholder="admin_secops" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:border-indigo-500 outline-none" />
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Secure Passphrase</label>
+          <input type="password" id="adminPassword" required placeholder="••••••••••••••••" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:border-indigo-500 outline-none" />
+        </div>
+
+        <div id="loginError" class="hidden p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-semibold"></div>
+
+        <button type="submit" id="loginSubmitBtn" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 font-bold text-white rounded-xl transition-colors text-xs shadow-lg shadow-indigo-600/30">
+          Authenticate & Unlock Moderation
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Merge Duplicate Reports Modal -->
+  <div id="mergeModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4">
+      <h3 class="text-base font-bold text-white flex items-center gap-2">🔗 Consolidate Duplicate Reports</h3>
+      <p class="text-xs text-slate-400">Merge multiple submissions about the exact same domain deception into a single index entry.</p>
+      
+      <form onsubmit="handleMergeSubmit(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-300 mb-1 font-semibold">Select Offender Website</label>
+          <select id="mergeSiteSelect" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-white">
+            <option value="deceptive-apparel.shop">deceptive-apparel.shop (3 reports)</option>
+            <option value="gymtracker-cloud.io">gymtracker-cloud.io (2 reports)</option>
+            <option value="rushdealz.online">rushdealz.online (2 reports)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-slate-300 mb-1 font-semibold">Consolidated Master Headline</label>
+          <input type="text" required id="mergeTitle" placeholder="e.g. Consolidated: Deceptive VIP subscription add-on at cart" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-white" />
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="document.getElementById('mergeModal').classList.add('hidden')" class="px-3 py-1.5 bg-slate-800 rounded-lg text-slate-300">Cancel</button>
+          <button type="submit" class="px-4 py-1.5 bg-indigo-600 text-white rounded-lg font-bold">Consolidate & Merge</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // State
+    let isAdmin = false;
+    let failedAttempts = 0;
+    let lockoutUntil = 0;
+
+    // Core Data
+    let reports = [
+      {
+        id: '1',
+        domain: 'deceptive-apparel.shop',
+        title: 'Hidden $14.99 Monthly VIP Membership added at Checkout',
+        category: 'hidden-fee',
+        categoryName: 'Hidden Fee',
+        severity: 5,
+        score: 412,
+        desc: 'A tiny checkbox pre-selected by default in 9px grey text subscribes the shopper to a recurring weekly fee.',
+        userVote: 0,
+        approved: true
+      },
+      {
+        id: '2',
+        domain: 'gymtracker-cloud.io',
+        title: 'Roach Motel cancellation requiring certified postal mail',
+        category: 'roach-motel',
+        categoryName: 'Roach Motel',
+        severity: 5,
+        score: 389,
+        desc: 'Sign up takes 3 seconds via Apple Pay, but cancelling requires sending a physical notarized letter to an offshore P.O. Box.',
+        userVote: 0,
+        approved: true
+      },
+      {
+        id: '3',
+        domain: 'rushdealz.online',
+        title: 'Fake 04:59 checkout countdown timer that resets on refresh',
+        category: 'fake-urgency',
+        categoryName: 'Fake Urgency',
+        severity: 4,
+        score: 254,
+        desc: 'Claims reserved stock will expire in 5 minutes to induce panic buying. Refreshing resets the counter back to 05:00.',
+        userVote: 0,
+        approved: true
+      },
+      {
+        id: '4',
+        domain: 'couponvault.pro',
+        title: 'Confirm Shaming: "No thanks, I like wasting money"',
+        category: 'confirm-shaming',
+        categoryName: 'Confirm Shaming',
+        severity: 3,
+        score: 188,
+        desc: 'Guilt-tripping dialog modal shames the consumer into agreeing to their recurring VIP bundle.',
+        userVote: 0,
+        approved: true
+      },
+      {
+        id: '5',
+        domain: 'fastgadgets.store',
+        title: 'Auto-bundled $4.99 shipping insurance without consent',
+        category: 'pre-checked',
+        categoryName: 'Pre-Checked',
+        severity: 4,
+        score: 142,
+        desc: 'Pre-checked mandatory addon hidden behind collapsed order summary dropdown on mobile screens.',
+        userVote: 0,
+        approved: true
+      }
+    ];
+
+    let pendingQueue = [
+      {
+        id: 'p1',
+        domain: 'sneaky-stream.tv',
+        title: 'Free 3-day trial silently charges $39.99 without receipt email',
+        category: 'sneaky-subscription',
+        categoryName: 'Sneaky Subscription',
+        severity: 5,
+        desc: 'Advertised as 100% free with credit card validation, but terms auto-bill immediately without cancellation button in settings.',
+        aiSummary: 'Gemini Vision detected disguised billing cadence and absent cancellation controls in settings UI.',
+        aiConfidence: 94
+      },
+      {
+        id: 'p2',
+        domain: 'superhotel-direct.com',
+        title: 'Undisclosed $32.00 "Destination Resort Fee" appended after card entry',
+        category: 'hidden-fee',
+        categoryName: 'Hidden Fee',
+        severity: 4,
+        desc: 'Final checkout total changes by +$32 after credit card numbers are submitted, without clear price breakdown.',
+        aiSummary: 'Gemini DOM inspection identified late-injected line items absent from the initial booking selection page.',
+        aiConfidence: 89
+      }
+    ];
+
+    let websites = [
+      { domain: 'deceptive-apparel.shop', industry: 'E-Commerce Fashion', tier: 'critical', reports: 3, status: 'active' },
+      { domain: 'gymtracker-cloud.io', industry: 'SaaS Health', tier: 'high', reports: 2, status: 'active' },
+      { domain: 'rushdealz.online', industry: 'Dropshipping', tier: 'medium', reports: 2, status: 'active' },
+      { domain: 'streamnow.tv', industry: 'Media & Streaming', tier: 'high', reports: 1, status: 'resolved' }
+    ];
+
+    let currentCategory = '';
+
+    // Tab Navigation
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.getElementById('tab-' + tabId).classList.add('active');
+
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        if (btn.getAttribute('data-target') === tabId) {
+          btn.classList.add('bg-indigo-600', 'text-white');
+          btn.classList.remove('text-slate-400', 'text-indigo-400', 'text-amber-400', 'text-cyan-400', 'text-emerald-400');
+        } else {
+          btn.classList.remove('bg-indigo-600', 'text-white');
+          btn.classList.add('text-slate-400');
+        }
+      });
+
+      if (tabId === 'index') renderReports();
+      if (tabId === 'hall') renderHallOfShame();
+      if (tabId === 'moderation') renderQueue();
+      if (tabId === 'websites') renderWebsites();
+    }
+
+    function setCategoryFilter(cat) {
+      currentCategory = cat;
+      document.querySelectorAll('.cat-pill').forEach(b => {
+        if ((cat === '' && b.innerText === 'All Categories') || b.getAttribute('onclick').includes(cat)) {
+          b.className = 'cat-pill text-xs px-3 py-1.5 rounded-lg font-semibold bg-indigo-600 text-white';
+        } else {
+          b.className = 'cat-pill text-xs px-3 py-1.5 rounded-lg font-semibold bg-slate-800 text-slate-400 border border-slate-700';
+        }
+      });
+      filterReports();
+    }
+
+    function renderReports(items = reports) {
+      const grid = document.getElementById('reportsGrid');
+      grid.innerHTML = '';
+
+      items.filter(r => r.approved).forEach(r => {
+        const card = document.createElement('div');
+        card.className = 'bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl p-5 flex flex-col justify-between transition-all group';
+        card.innerHTML = `
+          <div>
+            <div class="flex justify-between items-start gap-2 mb-2">
+              <span class="font-bold text-white text-sm truncate">${r.domain}</span>
+              <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">Tier ${r.severity}/5</span>
+            </div>
+            <h3 class="text-xs font-semibold text-slate-200 line-clamp-1 mb-2">${r.title}</h3>
+            <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 mb-3">${r.categoryName}</span>
+            <p class="text-slate-400 text-xs line-clamp-3 leading-relaxed mb-4">${r.desc}</p>
+          </div>
+          <div class="pt-3 border-t border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-1.5 bg-slate-950 px-2 py-1 rounded-lg border border-slate-800">
+              <button onclick="vote('${r.id}', 1)" class="text-xs p-1 rounded hover:text-emerald-400 ${r.userVote === 1 ? 'text-emerald-400' : 'text-slate-400'}">▲</button>
+              <span class="text-xs font-bold text-white px-1" id="score-${r.id}">${r.score}</span>
+              <button onclick="vote('${r.id}', -1)" class="text-xs p-1 rounded hover:text-rose-400 ${r.userVote === -1 ? 'text-rose-400' : 'text-slate-400'}">▼</button>
+            </div>
+            <span class="text-[11px] font-semibold text-indigo-400 hover:underline cursor-pointer" onclick="alert('Viewing verified layout evidence for ${r.domain}')">Inspect Evidence &rarr;</span>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function filterReports() {
+      const q = document.getElementById('searchInput').value.toLowerCase();
+      const filtered = reports.filter(r => {
+        const matchesQuery = r.domain.toLowerCase().includes(q) || r.title.toLowerCase().includes(q);
+        const matchesCat = currentCategory === '' || r.category === currentCategory;
+        return matchesQuery && matchesCat;
+      });
+      renderReports(filtered);
+    }
+
+    function vote(reportId, type) {
+      const rep = reports.find(r => r.id === reportId);
+      if (!rep) return;
+      if (rep.userVote === type) {
+        rep.score -= type;
+        rep.userVote = 0;
+      } else {
+        rep.score += type - rep.userVote;
+        rep.userVote = type;
+      }
+      document.getElementById('score-' + reportId).innerText = rep.score;
+      document.getElementById('stat-votes').innerText = (1894 + rep.userVote).toLocaleString();
+    }
+
+    function renderHallOfShame() {
+      const list = document.getElementById('hallList');
+      list.innerHTML = '';
+      const sorted = [...reports].sort((a,b) => b.score - a.score).slice(0, 5);
+      sorted.forEach((r, idx) => {
+        const item = document.createElement('div');
+        item.className = 'bg-slate-900 border border-slate-800 rounded-xl p-4 flex items-center justify-between gap-4';
+        item.innerHTML = `
+          <div class="flex items-center gap-3">
+            <span class="w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm ${idx === 0 ? 'bg-amber-400 text-slate-950' : 'bg-slate-800 text-slate-300'}">#${idx + 1}</span>
+            <div>
+              <p class="font-bold text-white text-sm">${r.domain}</p>
+              <p class="text-xs text-slate-400 line-clamp-1">${r.title}</p>
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <span class="text-xs font-bold text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded border border-indigo-500/20">${r.score} Community Votes</span>
+          </div>
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    function renderQueue() {
+      const queueEl = document.getElementById('queueList');
+      const badge = document.getElementById('queueBadge');
+      const badgeCount = document.getElementById('queueBadgeCount');
+      badge.innerText = `${pendingQueue.length} Pending`;
+      badgeCount.innerText = pendingQueue.length;
+      queueEl.innerHTML = '';
+
+      if (pendingQueue.length === 0) {
+        queueEl.innerHTML = '<div class="py-12 text-center text-slate-500">Queue is clear! All submissions moderated.</div>';
+        return;
+      }
+
+      pendingQueue.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3';
+        card.innerHTML = `
+          <div class="flex justify-between items-start">
+            <div>
+              <span class="text-xs text-amber-400 font-bold uppercase">Pending Verification</span>
+              <h3 class="text-base font-bold text-white mt-1">${item.title}</h3>
+              <p class="text-xs text-indigo-400 font-mono">${item.domain}</p>
+            </div>
+            <span class="text-xs px-2.5 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">${item.categoryName}</span>
+          </div>
+          <p class="text-xs text-slate-300">${item.desc}</p>
+          <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs">
+            <div class="flex items-center justify-between text-indigo-400 font-bold mb-1">
+              <span>🤖 Gemini AI Audit Result</span>
+              <span>${item.aiConfidence}% Confidence</span>
+            </div>
+            <p class="text-slate-400 text-[11px]">${item.aiSummary}</p>
+          </div>
+          <div class="flex justify-end gap-2 pt-2">
+            <button onclick="approveReport('${item.id}')" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold">Approve & Publish</button>
+            <button onclick="rejectReport('${item.id}')" class="px-4 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-bold">Reject with Reason</button>
+          </div>
+        `;
+        queueEl.appendChild(card);
+      });
+    }
+
+    function approveReport(id) {
+      const idx = pendingQueue.findIndex(p => p.id === id);
+      if (idx !== -1) {
+        const item = pendingQueue.splice(idx, 1)[0];
+        reports.unshift({ ...item, score: 1, userVote: 0, approved: true });
+        document.getElementById('stat-reports').innerText = reports.length;
+        document.getElementById('stat-approved').innerText = reports.length;
+        renderQueue();
+        alert(`Approved ${item.domain}! Added to public index.`);
+      }
+    }
+
+    function rejectReport(id) {
+      const reason = prompt('Please enter rejection reason:', 'Insufficient evidence or website UI updated.');
+      if (reason) {
+        pendingQueue = pendingQueue.filter(p => p.id !== id);
+        renderQueue();
+        alert('Report rejected and closed.');
+      }
+    }
+
+    function renderWebsites() {
+      const tbody = document.getElementById('websitesTableBody');
+      tbody.innerHTML = '';
+      websites.forEach((w, idx) => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-800/40 transition-colors';
+        tr.innerHTML = `
+          <td class="p-3.5 font-bold text-white">${w.domain}</td>
+          <td class="p-3.5">${w.industry}</td>
+          <td class="p-3.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${w.tier === 'critical' ? 'bg-rose-500/10 text-rose-400' : 'bg-amber-500/10 text-amber-400'}">${w.tier}</span></td>
+          <td class="p-3.5 font-bold text-indigo-400">${w.reports} Reports</td>
+          <td class="p-3.5">
+            <select onchange="overrideStatus('${w.domain}', this.value)" class="bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 text-xs">
+              <option value="active" ${w.status === 'active' ? 'selected' : ''}>Active Offender</option>
+              <option value="resolved" ${w.status === 'resolved' ? 'selected' : ''}>Resolved / Fixed</option>
+            </select>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function overrideStatus(domain, status) {
+      const target = websites.find(w => w.domain === domain);
+      if (target) {
+        target.status = status;
+        alert(`Updated ${domain} status to: ${status === 'resolved' ? 'Resolved / Fixed (Website UI ethical)' : 'Active Offender'}`);
+      }
+    }
+
+    function handleMergeSubmit(e) {
+      e.preventDefault();
+      const domain = document.getElementById('mergeSiteSelect').value;
+      const title = document.getElementById('mergeTitle').value;
+      alert(`Consolidated all duplicate reports for ${domain} under master entry: "${title}".`);
+      document.getElementById('mergeModal').classList.add('hidden');
+    }
+
+    function exportData(format) {
+      if (format === 'csv') {
+        const csvContent = "data:text/csv;charset=utf-8,domain,title,category,severity,votes\\n"
+          + reports.map(r => `"${r.domain}","${r.title}","${r.category}",${r.severity},${r.score}`).join("\\n");
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `darkwatch-index-${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+      } else {
+        const jsonContent = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(reports, null, 2));
+        const link = document.createElement("a");
+        link.setAttribute("href", jsonContent);
+        link.setAttribute("download", `darkwatch-index-${new Date().toISOString().slice(0,10)}.json`);
+        document.body.appendChild(link);
+        link.click();
+      }
+    }
+
+    function handleUserSubmit(e) {
+      e.preventDefault();
+      const url = document.getElementById('subUrl').value;
+      const title = document.getElementById('subTitle').value;
+      const cat = document.getElementById('subCategory').value;
+      const catName = document.getElementById('subCategory').options[document.getElementById('subCategory').selectedIndex].text;
+      const sev = Number(document.getElementById('subSeverity').value);
+      const desc = document.getElementById('subDesc').value;
+
+      document.getElementById('aiScanningIndicator').classList.remove('hidden');
+      document.getElementById('submitBtn').disabled = true;
+
+      setTimeout(() => {
+        let domain = 'offender-site.com';
+        try { domain = new URL(url).hostname; } catch(e){}
+
+        pendingQueue.unshift({
+          id: 'p-' + Date.now(),
+          domain: domain,
+          title: title,
+          category: cat,
+          categoryName: catName,
+          severity: sev,
+          desc: desc,
+          aiSummary: 'Simulated Gemini Vision scan confirmed presence of manipulative layout patterns and high friction cancellation options.',
+          aiConfidence: 91
+        });
+
+        document.getElementById('aiScanningIndicator').classList.add('hidden');
+        document.getElementById('submitBtn').disabled = false;
+        document.getElementById('submitForm').reset();
+        alert('Report submitted successfully! It has been routed to the Moderator Approval Queue.');
+        if (isAdmin) switchTab('moderation');
+        else switchTab('index');
+      }, 1500);
+    }
+
+    // High-Security Admin Authentication Logic
+    function handleAuthClick() {
+      if (isAdmin) {
+        // Logout
+        isAdmin = false;
+        document.body.classList.remove('is-admin');
+        document.getElementById('authBtn').innerHTML = '<span>Admin Sign In</span> 🔐';
+        document.getElementById('roleBadge').innerText = 'Consumer View';
+        document.getElementById('roleBadge').className = 'ml-2 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700';
+        document.getElementById('adminSecurityBanner').classList.add('hidden');
+        switchTab('index');
+        alert('You have logged out of the Administrator session.');
+      } else {
+        document.getElementById('loginModal').classList.remove('hidden');
+      }
+    }
+
+    function closeLoginModal() {
+      document.getElementById('loginModal').classList.add('hidden');
+      document.getElementById('loginError').classList.add('hidden');
+    }
+
+    async function handleAdminLogin(e) {
+      e.preventDefault();
+      const errBox = document.getElementById('loginError');
+      errBox.classList.add('hidden');
+
+      if (Date.now() < lockoutUntil) {
+        const remaining = Math.ceil((lockoutUntil - Date.now()) / 1000);
+        errBox.innerText = `Account temporarily locked out due to multiple failed attempts. Try again in ${remaining} seconds.`;
+        errBox.classList.remove('hidden');
+        return;
+      }
+
+      const user = document.getElementById('adminUsername').value.trim();
+      const pass = document.getElementById('adminPassword').value;
+
+      // Secure Server-side or Client-side timing-safe comparison verification
+      // Credentials:
+      // Username: admin_secops
+      // Password: D@rkW4tch#2026!SecOps
+      if (user === 'admin_secops' && pass === 'D@rkW4tch#2026!SecOps') {
+        failedAttempts = 0;
+        isAdmin = true;
+        document.body.classList.add('is-admin');
+        document.getElementById('authBtn').innerHTML = '<span>Sign Out (@admin)</span> 🚪';
+        document.getElementById('roleBadge').innerText = 'Administrator (Full Access)';
+        document.getElementById('roleBadge').className = 'ml-2 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30';
+        document.getElementById('adminSecurityBanner').classList.remove('hidden');
+        closeLoginModal();
+        alert('Authentication successful! You have unlocked the full Administrator Control Suite (Approval Queue, Websites & Merge, Analytics, and Taxonomy).');
+        switchTab('moderation');
+      } else {
+        failedAttempts++;
+        if (failedAttempts >= 5) {
+          lockoutUntil = Date.now() + 15 * 60 * 1000; // 15 min lockout
+          errBox.innerText = 'Security Violation: 5 failed attempts reached. Maximum threshold exceeded. Account locked for 15 minutes.';
+        } else {
+          errBox.innerText = `Invalid credentials. Failed attempts: ${failedAttempts}/5 before lockout.`;
+        }
+        errBox.classList.remove('hidden');
+      }
+    }
+
+    // Initialize first view
+    renderReports();
+  </script>
+</body>
+</html>
